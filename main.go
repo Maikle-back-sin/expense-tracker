@@ -96,8 +96,8 @@ func cmdAdd(args []string) error {
 }
 
 func cmdUpdate(args []string) error {
-	if len(args) < 3 {
-		return fmt.Errorf("usage: update <id> \"new description\"")
+	if len(args) < 5 {
+		return fmt.Errorf("usage: update <id> \"--description *Your desc* --amount *Price*\"")
 	}
 	id, err := strconv.Atoi(args[1])
 	if err != nil {
@@ -111,12 +111,15 @@ func cmdUpdate(args []string) error {
 	if task == nil {
 		return fmt.Errorf("task %d not found", id)
 	}
-	task.Description = strings.Join(args[2:], " ")
+	task.Description = strings.Join(args[3:4], " ")
+
+	newAmount, err := strconv.Atoi(args[5])
+	task.Amount = newAmount
 
 	if err := saveTasks(tasks); err != nil {
 		return err
 	}
-	fmt.Println("Task updated")
+	fmt.Println("Purchase updated")
 	return nil
 }
 
@@ -140,10 +143,11 @@ func cmdDelete(args []string) error {
 	if err := saveTasks(tasks); err != nil {
 		return err
 	}
-	fmt.Println("Task deleted")
+	fmt.Println("Purchase deleted")
 	return nil
 }
 
+/*Это для будушего фильтра по категориям*/
 func cmdSetStatus(args []string, status string) error {
 	if len(args) < 2 {
 		return fmt.Errorf("usage: mark-%s <id>", status)
@@ -168,22 +172,44 @@ func cmdSetStatus(args []string, status string) error {
 	return nil
 }
 
-//func cmdList(args []string) error {
-//	tasks, err := loadTasks()
-//	if err != nil {
-//		return err
-//	}
-//	filter := ""
-//	if len(args) > 1 {
-//		filter = args[1]
-//	}
-//	for _, t := range tasks {
-//		if filter == "" || t.Status == filter {
-//			fmt.Printf("[%d] %s [%s] (created: %s, updated: %s)\n", t.ID, t.Description, t.Status, t.CreatedAt.Format("2006-01-02 15:04"), t.UpdatedAt.Format("2006-01-02 15:04"))
-//		}
-//	}
-//	return nil
-//}
+func cmdList() error {
+	tasks, err := loadTasks()
+	if err != nil {
+		return err
+	}
+
+	for _, t := range tasks {
+		fmt.Printf("[%d] %s. [Amount - %d] (created: %s)\n", t.ID, t.Description, t.Amount, t.Date.Format("2006-01-02 15:04"))
+	}
+	return nil
+}
+
+func summaryList(args []string) error {
+	summary := 0
+	tasks, err := loadTasks()
+	if err != nil {
+		return err
+	}
+	if args == nil {
+		for _, t := range tasks {
+			summary += t.Amount
+		}
+		fmt.Printf("Your common amount is %d$", summary)
+	} else {
+		month, err := strconv.Atoi(args[1])
+		if err != nil || month > 12 {
+			return fmt.Errorf("invalid month")
+		}
+		for _, t := range tasks {
+			if int(t.Date.Month()) == month {
+				summary += t.Amount
+			}
+		}
+		fmt.Printf("Total expenses for %s: $%d", time.Month(month), summary)
+	}
+
+	return nil
+}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -200,14 +226,10 @@ func main() {
 		err = cmdUpdate(args)
 	case "delete":
 		err = cmdDelete(args)
-	case "mark-todo":
-		err = cmdSetStatus(args, StatusTodo)
-	case "mark-in-progress":
-		err = cmdSetStatus(args, StatusInProgress)
-	case "mark-done":
-		err = cmdSetStatus(args, StatusDone)
-	//case "list":
-	//	err = cmdList(args)
+	case "list":
+		err = cmdList()
+	case "summary":
+		err = summaryList(args)
 	default:
 		fmt.Printf("Unknown command: %s\n", cmd)
 	}

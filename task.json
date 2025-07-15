@@ -10,5 +10,17 @@
     "description": "Bay a car",
     "created_at": "2025-07-10T07:18:24.9918429+03:00",
     "amount": 2000
+  },
+  {
+    "id": 3,
+    "description": "Bay a divan",
+    "created_at": "2025-08-10T07:18:24.9918429+03:00",
+    "amount": 155
+  },
+  {
+    "id": 4,
+    "description": "Bay a book",
+    "created_at": "2025-08-10T07:18:24.9918429+03:00",
+    "amount": 335
   }
 ]
